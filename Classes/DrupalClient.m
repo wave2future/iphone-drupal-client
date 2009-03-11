@@ -122,7 +122,7 @@
 }
 
 
-#pragma mark - XMLRPCConnectionDelegate Methods.
+#pragma mark - XMLRPCConnectionDelegate Methods
 
 - (void)connection:(XMLRPCConnection *)connection didReceiveResponse:(XMLRPCResponse *)response forMethod:(NSString *)method {
     [_delegate didFinishRequest:self method:method response:response];
