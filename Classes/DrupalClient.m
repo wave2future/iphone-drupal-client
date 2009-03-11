@@ -75,7 +75,12 @@
     
     NSString *timeToString = [NSString stringWithFormat:@"%d", timestamp]; 
 	NSMutableArray *params = [NSMutableArray arrayWithObjects:signedKey, _domain, timeToString, nonce, nil];
-    [params addObjectsFromArray:parameters];
+
+    if ([parameters count] > 0) {
+        [params addObjectsFromArray:parameters];        
+    }
+    
+    NSLog(@"Sending Request With Params: %@", params);
 
 	[request setMethod:method withObjects:params];
     
@@ -104,8 +109,11 @@
     XMLRPCRequest *request = [[XMLRPCRequest alloc] initWithHost:url];
     
     NSString *timeToString = [NSString stringWithFormat:@"%d", timestamp]; 
-	NSMutableArray *params = [NSArray arrayWithObjects:signedKey, _domain, timeToString, nonce, nil];
-    [params arrayByAddingObjectsFromArray:parameters];
+	NSMutableArray *params = [NSMutableArray arrayWithObjects:signedKey, _domain, timeToString, nonce, nil];
+
+    if ([parameters count] > 0) {
+        [params addObjectsFromArray:parameters];        
+    }
     
 	[request setMethod:method withObjects:params];
     

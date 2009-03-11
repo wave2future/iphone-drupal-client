@@ -62,10 +62,15 @@
     [self.paramsInput resignFirstResponder];
     
     [self.indicator startAnimating];
+
+    NSArray *parameters;
     
-    NSArray *parameters = [self.paramsInput.text componentsSeparatedByString:@";"];
-    
-    [self.appDelegate.drupal requestMethod:self.input.text parameters:parameters delegate:self];
+    if ([self.paramsInput.text isEqualToString:@""] || self.paramsInput.text == nil) {
+        [self.appDelegate.drupal requestMethod:self.input.text parameters:nil delegate:self];
+    } else {
+        parameters = [self.paramsInput.text componentsSeparatedByString:@";"];
+        [self.appDelegate.drupal requestMethod:self.input.text parameters:parameters delegate:self];
+    }
 }
 
 
