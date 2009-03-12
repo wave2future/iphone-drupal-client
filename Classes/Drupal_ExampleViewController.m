@@ -63,13 +63,26 @@
     
     [self.indicator startAnimating];
 
-    NSArray *parameters;
-    
     if ([self.paramsInput.text isEqualToString:@""] || self.paramsInput.text == nil) {
         [self.appDelegate.drupal requestMethod:self.input.text parameters:nil delegate:self];
     } else {
-        parameters = [self.paramsInput.text componentsSeparatedByString:@";"];
+        NSMutableArray *parameters = [[NSMutableArray alloc] init];
+        NSArray *inputs = [self.paramsInput.text componentsSeparatedByString:@";"];
+        
+        // Make sure numbers get added properly for our example.
+        for (NSString *param in inputs) {
+            NSScanner *scanner = [NSScanner scannerWithString:param];
+            NSInteger integerValue;
+            
+            if ([scanner scanInteger:&integerValue] && [scanner isAtEnd]) {
+                [parameters addObject:[NSNumber numberWithInteger:integerValue]];
+            } else {
+                [parameters addObject:param];
+            }
+        }
+    
         [self.appDelegate.drupal requestMethod:self.input.text parameters:parameters delegate:self];
+        [parameters release];
     }
 }
 

@@ -79,10 +79,10 @@
     if ([parameters count] > 0) {
         [params addObjectsFromArray:parameters];        
     }
-    
-    NSLog(@"Sending Request With Params: %@", params);
 
 	[request setMethod:method withObjects:params];
+    
+    NSLog(@"Sending Request: %@ with %@", method, [request source]);
     
 	[[XMLRPCConnection alloc] initWithXMLRPCRequest:request delegate:self];
     
