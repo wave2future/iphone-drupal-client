@@ -29,11 +29,14 @@
 
 - (void)dealloc {
     [super dealloc];
-
+    
     [_key autorelease];
     [_domain autorelease];
 }
 
+
+#pragma mark -
+#pragma mark Private Methods
 
 /**
  *  Get a signed SHA256 key formatted for the services.module.
@@ -61,65 +64,64 @@
 }
 
 
-- (void)requestMethod:(NSString *)method parameters:(NSArray *)parameters {
-    NSString *nonce = [NSString stringWithFormat:@"%d",random() % 10000];
-	
-	NSDate *date = [NSDate date];
-    NSInteger timestamp = (NSInteger)[date timeIntervalSince1970];
+/**
+ *  Prepare all the parameters needed for a method request.
+ */
+- (XMLRPCRequest *)preProcessRequest:(NSString *)method parameters:(NSArray *)parameters withKey:(BOOL)withKey {
+    NSMutableArray *params;
     
-	NSString *signedKey = [self getSignedKey:method nonce:nonce timestamp:timestamp];
-	
+    if (!withKey) {
+        params = [NSArray arrayWithArray:parameters];
+    } 
+    // Generate the needed parameters for the key signing.
+    else {
+        NSString *nonce = [NSString stringWithFormat:@"%d",random() % 10000];
+        
+        NSDate *date = [NSDate date];
+        NSInteger timestamp = (NSInteger)[date timeIntervalSince1970];
+        
+        NSString *signedKey = [self getSignedKey:method nonce:nonce timestamp:timestamp];
+        
+        NSString *timeToString = [NSString stringWithFormat:@"%d", timestamp]; 
+        params = [NSMutableArray arrayWithObjects:signedKey, _domain, timeToString, nonce, nil];
+        
+        if ([parameters count] > 0) {
+            [params addObjectsFromArray:parameters];
+        }
+    }
+    
     // TODO: handle base_path() ?
     NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@/services/xmlrpc", _domain]];
     XMLRPCRequest *request = [[XMLRPCRequest alloc] initWithHost:url];
-    
-    NSString *timeToString = [NSString stringWithFormat:@"%d", timestamp]; 
-	NSMutableArray *params = [NSMutableArray arrayWithObjects:signedKey, _domain, timeToString, nonce, nil];
-
-    if ([parameters count] > 0) {
-        [params addObjectsFromArray:parameters];        
-    }
-
-	[request setMethod:method withObjects:params];
+    [request setMethod:method withObjects:params];
     
     NSLog(@"Sending Request: %@ with %@", method, [request source]);
     
-	[[XMLRPCConnection alloc] initWithXMLRPCRequest:request delegate:self];
+    return request;
     
     [request release];
 }
 
 
-- (void)requestMethod:(NSString *)method parameters:(NSArray *)parameters delegate:(id)delegate {
-    [self setDelegate:delegate];
-    [self requestMethod:method parameters:parameters];
+#pragma mark -
+#pragma mark Public Methods
+
+- (void)requestMethod:(NSString *)method parameters:(NSArray *)parameters withKey:(BOOL)withKey {
+    XMLRPCRequest *request = [self preProcessRequest:method parameters:parameters withKey:withKey];
+    
+	[[XMLRPCConnection alloc] initWithXMLRPCRequest:request delegate:self];
 }
 
 
-- (XMLRPCResponse *)requestSynchronousResponse:(NSString *)method parameters:(NSArray *)parameters {
-    NSString *nonce = [NSString stringWithFormat:@"%d",random() % 10000];
-	
-	NSDate *date = [NSDate date];
-    NSInteger timestamp = (NSInteger)[date timeIntervalSince1970];
-    
-	NSString *signedKey = [self getSignedKey:method nonce:nonce timestamp:timestamp];
-	
-    // TODO: handle base_path() ?
-    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@/services/xmlrpc", _domain]];
-    XMLRPCRequest *request = [[XMLRPCRequest alloc] initWithHost:url];
-    
-    NSString *timeToString = [NSString stringWithFormat:@"%d", timestamp]; 
-	NSMutableArray *params = [NSMutableArray arrayWithObjects:signedKey, _domain, timeToString, nonce, nil];
+- (void)requestMethod:(NSString *)method parameters:(NSArray *)parameters withKey:(BOOL)withKey delegate:(id)delegate {
+    [self setDelegate:delegate];
+    [self requestMethod:method parameters:parameters withKey:withKey];
+}
 
-    if ([parameters count] > 0) {
-        [params addObjectsFromArray:parameters];        
-    }
-    
-	[request setMethod:method withObjects:params];
-    
+
+- (XMLRPCResponse *)requestSynchronousResponse:(NSString *)method parameters:(NSArray *)parameters withKey:(BOOL)withKey {
+    XMLRPCRequest *request = [self preProcessRequest:method parameters:parameters withKey:withKey];
 	XMLRPCResponse *response = [XMLRPCConnection sendSynchronousXMLRPCRequest:request];
-    
-    [request release];    
     
     return response;
 }
@@ -130,7 +132,8 @@
 }
 
 
-#pragma mark - XMLRPCConnectionDelegate Methods
+#pragma mark - 
+#pragma mark XMLRPCConnectionDelegate Methods
 
 - (void)connection:(XMLRPCConnection *)connection didReceiveResponse:(XMLRPCResponse *)response forMethod:(NSString *)method {
     [_delegate didFinishRequest:self method:method response:response];

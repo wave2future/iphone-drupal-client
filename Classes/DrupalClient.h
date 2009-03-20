@@ -29,10 +29,10 @@
 
 
 // Handle making requests to the drupal site.
-- (void)requestMethod:(NSString *)method parameters:(NSArray *)parameters;
-- (void)requestMethod:(NSString *)method parameters:(NSArray *)parameters delegate:(id)delegate;
+- (void)requestMethod:(NSString *)method parameters:(NSArray *)parameters withKey:(BOOL)withKey;
+- (void)requestMethod:(NSString *)method parameters:(NSArray *)parameters withKey:(BOOL)withKey delegate:(id)delegate;
 
-- (XMLRPCResponse *)requestSynchronousResponse:(NSString *)method parameters:(NSArray *)parameters;
+- (XMLRPCResponse *)requestSynchronousResponse:(NSString *)method parameters:(NSArray *)parameters withKey:(BOOL)withKey;
 
 
 // Simple method to change the delegate as needed.
